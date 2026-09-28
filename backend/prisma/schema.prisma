@@ -1,0 +1,74 @@
+// Prisma schema for Smart Expense & Budget Management Platform
+// PostgreSQL via Aiven
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String         @id @default(cuid())
+  name             String
+  email            String         @unique
+  password         String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  settings         Json?          @default("{}")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  expenses      Expense[]
+  budgets       Budget[]
+  subscriptions Subscription[]
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  category  String
+  type      String   @default("expense")
+  merchant  String?
+  date      DateTime @default(now())
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String
+  limit     Float
+  month     String   // Format: YYYY-MM
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category, month])
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  category      String   @default("Entertainment")
+  cost          Float
+  billingCycle  String   @default("monthly")
+  nextRenewal   DateTime @default(now())
+  paymentMethod String   @default("UPI")
+  status        String   @default("Active")
+  confidence    Int      @default(98)
+  notifyBefore  Boolean  @default(true)
+  unusedDays    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
